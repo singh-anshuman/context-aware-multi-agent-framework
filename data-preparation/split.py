@@ -1,5 +1,6 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 base_dir = Path(__file__).resolve().parent.parent
 dataset_dir = base_dir / 'dataset'

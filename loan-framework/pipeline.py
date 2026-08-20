@@ -1,10 +1,11 @@
-from langgraph.graph import StateGraph, END
 from agents import (
     stage_1_document_verification,
     stage_2_credit_scoring,
     stage_3_risk_assessment,
-    stage_4_final_approval
+    stage_4_final_approval,
 )
+from langgraph.graph import END, StateGraph
+
 
 def create_workflow():
     """Create LangGraph workflow"""

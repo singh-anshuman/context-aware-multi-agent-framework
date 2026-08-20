@@ -1,5 +1,6 @@
-from firstNode import first_node
 from langgraph.graph import END, START, StateGraph
+
+from firstNode import first_node
 from secondNode import second_node
 from state import State
 
