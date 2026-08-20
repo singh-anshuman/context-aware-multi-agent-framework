@@ -1,4 +1,5 @@
 from anthropic import Anthropic, APIError
+from anthropic.types import Message
 from cso_framework import ContextStateObject
 
 client = Anthropic()
@@ -71,7 +72,7 @@ def stage_2_credit_scoring(state: ContextStateObject):
     """
 
     try:
-        response = client.messages.create(
+        response: Message = client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=150,
             messages=[{"role": "user", "content": prompt}],
