@@ -2,6 +2,7 @@ import json
 
 import pandas as pd
 from baseline_agents import run_baseline_pipeline
+from cso_framework import ContextStateObject
 from pipeline import pipeline
 
 test_df = pd.read_csv("test_data.csv")
@@ -10,11 +11,11 @@ baseline_results = []
 
 print(f"\nEvaluating {len(test_df)} test samples...\n")
 
-for idx, row in test_df.iterrows():
-    if idx % max(1, len(test_df) // 10) == 0:
+for position, (idx, row) in enumerate(test_df.iterrows()):
+    if position % max(1, len(test_df) // 10) == 0:
         print(f"Progress: {idx}/{len(test_df)}")
 
-    applicant_data = {
+    applicant_data: ContextStateObject = {
         "applicant_id": str(row.get("ApplicantID", idx)),
         "age": int(row.get("Age", 30)),
         "annual_income": float(row.get("AnnualIncome", 50000)),
@@ -41,6 +42,9 @@ for idx, row in test_df.iterrows():
         "stage_4_audit_trail": [],
         "processing_time": {},
     }
+
+    print("Application data:")
+    print(applicant_data)
 
     try:
         ca_result = pipeline.invoke(applicant_data)

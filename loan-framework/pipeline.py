@@ -10,7 +10,7 @@ from langgraph.graph import END, StateGraph
 
 def create_workflow():
     """Create LangGraph workflow"""
-    workflow = StateGraph(ContextStateObject)  # Use dict for TypedDict compatibility
+    workflow = StateGraph(ContextStateObject)
 
     workflow.add_node("stage_1", stage_1_document_verification)
     workflow.add_node("stage_2", stage_2_credit_scoring)

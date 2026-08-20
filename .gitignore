@@ -1,2 +1,4 @@
 /langgraph-env
-/__pycache__
+__pycache__/
+api_key.txt
+.env

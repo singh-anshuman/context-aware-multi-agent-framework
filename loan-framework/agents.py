@@ -1,8 +1,14 @@
+import os
+
 from anthropic import Anthropic, APIError
 from anthropic.types import Message
 from cso_framework import ContextStateObject
+from dotenv import load_dotenv
 
-client = Anthropic()
+load_dotenv()
+
+
+client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
 def stage_1_document_verification(state: ContextStateObject):
@@ -73,12 +79,16 @@ def stage_2_credit_scoring(state: ContextStateObject):
 
     try:
         response: Message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-haiku-4-5",
             max_tokens=150,
             messages=[{"role": "user", "content": prompt}],
         )
         rationale = response.content[0].text
-    except APIError:
+    except APIError as error:
+        print(f"  Credit analysis error: {error}")
+        rationale = f"Credit assessment complete. {band} tier applicant."
+    except Exception as error:
+        print(f"  Unexpected credit analysis error: {error}")
         rationale = f"Credit assessment complete. {band} tier applicant."
 
     state["stage_2_credit_band"] = band
@@ -114,7 +124,7 @@ def stage_3_risk_assessment(state: ContextStateObject):
 
     try:
         response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-haiku-4-5",
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -161,7 +171,7 @@ def stage_4_final_approval(state: ContextStateObject):
 
     try:
         response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-haiku-4-5",
             max_tokens=250,
             messages=[{"role": "user", "content": prompt}],
         )

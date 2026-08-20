@@ -1,0 +1,10 @@
+{
+  "total_evaluated": 1,
+  "context_aware_accuracy": 1.0,
+  "baseline_accuracy": 1.0,
+  "improvement": 0.0,
+  "context_aware_consistency": 1.0,
+  "context_aware_approval_rate": 1.0,
+  "baseline_approval_rate": 1.0,
+  "ground_truth_approval_rate": 1.0
+}
