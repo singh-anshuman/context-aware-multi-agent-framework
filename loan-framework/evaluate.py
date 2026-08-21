@@ -120,7 +120,9 @@ ca_consistency = (
 )
 
 print("\n2. DECISION CONSISTENCY:")
-print(f"   Context-Aware: {ca_consistency:.2%}")
+print(
+    f"   Context-Aware: {ca_consistency:.2%}"
+)  # TODO: Decision consistency for baseline is not calculated.
 
 ca_approval_rate = (ca_df["ca_decision"] == "APPROVED").mean()
 bl_approval_rate = (bl_df["bl_decision"] == "APPROVED").mean()

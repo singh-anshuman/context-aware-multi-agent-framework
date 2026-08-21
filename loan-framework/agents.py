@@ -143,7 +143,7 @@ def stage_3_risk_assessment(state: ContextStateObject):
 
     state["stage_3_risk_classification"] = risk_class
     state["stage_3_risk_score"] = state["risk_score"]
-    state["stage_3_risk_flags"] = [assessment[:100]]
+    state["stage_3_risk_flags"] = [assessment]
 
     print(f"  Overall Risk: {risk_class}")
     return state
