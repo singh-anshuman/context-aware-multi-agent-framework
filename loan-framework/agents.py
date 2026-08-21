@@ -99,105 +99,119 @@ def stage_2_credit_scoring(state: ContextStateObject):
     return state
 
 
-def stage_3_risk_assessment(state: ContextStateObject):
-    """Stage 3: Risk Assessment with full CSO context"""
-    print(f"\n[STAGE 3] Risk assessment for {state['applicant_id']}")
-
+def stage_3_risk_assessment(state):
+    # LLM reads FULL CSO and makes decision
     prompt = f"""
-    Comprehensive Risk Assessment:
+    You are a senior risk officer.
     
-    STAGE 1 VERIFICATION RESULT:
-    - Status: {state["stage_1_verification_status"]}
-    - Flags: {", ".join(state["stage_1_flags"])}
+    STAGE 1 - VERIFICATION:
+    Status: {state["stage_1_verification_status"]}
+    Flags: {", ".join(state["stage_1_flags"])}
     
-    STAGE 2 CREDIT RESULT:
-    - Credit Band: {state["stage_2_credit_band"]}
-    - Risk Tier: {state["stage_2_risk_tier"]}
+    STAGE 2 - CREDIT:
+    Credit Band: {state["stage_2_credit_band"]}
+    Risk Tier: {state["stage_2_risk_tier"]}
     
-    APPLICANT FINANCIALS:
-    - Loan Amount: ${state["loan_amount"]:,.0f}
-    - Net Worth: ${state["net_worth"]:,.0f}
-    - Risk Score: {state["risk_score"]}
+    FINANCIAL PROFILE:
+    Income: ${state["annual_income"]:,.0f}
+    DTI: {state["debt_to_income"]:.2%}
+    Risk Score: {state["risk_score"]}
     
-    Given this full context, classify OVERALL risk as Low/Medium/High/VeryHigh.
+    Classify risk as: Low/Medium/High/Very High
+    Provide 3-5 key factors.
+    Explain reasoning.
     """
 
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=200,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        assessment = response.content[0].text
-    except APIError:
-        assessment = "Risk assessment complete based on financial profile."
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}],
+    )
 
-    if state["risk_score"] < 40:
-        risk_class = "Low"
-    elif state["risk_score"] < 60:
-        risk_class = "Medium"
-    elif state["risk_score"] < 80:
-        risk_class = "High"
-    else:
+    # Extract LLM's decision
+    text = response.content[0].text.upper()
+    if "VERY HIGH" in text:
         risk_class = "Very High"
+    elif "HIGH" in text:
+        risk_class = "High"
+    elif "MEDIUM" in text:
+        risk_class = "Medium"
+    else:
+        risk_class = "Low"
 
     state["stage_3_risk_classification"] = risk_class
-    state["stage_3_risk_score"] = state["risk_score"]
-    state["stage_3_risk_flags"] = [assessment]
-
-    print(f"  Overall Risk: {risk_class}")
     return state
 
 
-def stage_4_final_approval(state: ContextStateObject):
-    """Stage 4: Final Approval with complete CSO"""
-    print(f"\n[STAGE 4] Final decision for {state['applicant_id']}")
-
+def stage_4_final_approval(state):
+    # LLM reads COMPLETE application and decides
     prompt = f"""
-    FINAL LOAN APPROVAL DECISION
+    You are the final loan approval authority.
     
-    VERIFICATION (Stage 1): {state["stage_1_verification_status"].upper()}
-    CREDIT ASSESSMENT (Stage 2): {state["stage_2_credit_band"]}
-    RISK ASSESSMENT (Stage 3): {state["stage_3_risk_classification"]} (Score: {state["stage_3_risk_score"]:.0f})
+    === COMPLETE APPLICATION ===
     
-    DECISION CRITERIA:
-    1. Verification: {state["stage_1_verification_status"]} {"✓" if state["stage_1_verification_status"] == "pass" else "✗"}
-    2. No Bankruptcy: {"✓" if not state["bankruptcy_history"] else "✗"}
-    3. Risk Score < 60: {"✓" if state["stage_3_risk_score"] < 60 else "✗"}
-    4. DTI <= 0.55: {"✓" if state["debt_to_income"] <= 0.55 else "✗"}
+    STAGE 1 - VERIFICATION:
+    {state["stage_1_verification_status"].upper()}
+    {", ".join(state["stage_1_flags"])}
     
-    Make final decision: APPROVED or REJECTED? Provide 2-3 sentence explanation.
+    STAGE 2 - CREDIT:
+    Score: {state["credit_score"]}
+    Band: {state["stage_2_credit_band"]}
+    Tier: {state["stage_2_risk_tier"]}
+    Assessment: {state["stage_2_rationale"][:300]}
+    
+    STAGE 3 - RISK:
+    Classification: {state["stage_3_risk_classification"]}
+    Score: {state["stage_3_risk_score"]:.0f}
+    Factors: {", ".join(state["stage_3_risk_flags"])}
+    
+    FINANCIALS:
+    Income: ${state["annual_income"]:,.0f}
+    Net Worth: ${state["net_worth"]:,.0f}
+    Loan Amount: ${state["loan_amount"]:,.0f}
+    DTI: {state["debt_to_income"]:.2%}
+    Bankruptcy: {"Yes" if state["bankruptcy_history"] else "No"}
+    Defaults: {state["previous_defaults"]}
+    
+    === YOUR DECISION ===
+    
+    YOU ARE THE DECISION MAKER.
+    
+    Provide:
+    DECISION: [APPROVED or REJECTED]
+    CONFIDENCE: [0-100%]
+    RATIONALE: [2-3 sentences]
+    KEY FACTORS: [3-5 factors]
     """
 
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=250,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        decision_text = response.content[0].text
-    except APIError:
-        decision_text = "Decision made based on applicant profile and risk assessment."
-
-    criteria_met = (
-        state["stage_1_verification_status"] == "pass"
-        and not state["bankruptcy_history"]
-        and state["stage_3_risk_score"] < 60
-        and state["debt_to_income"] <= 0.55
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=600,
+        messages=[{"role": "user", "content": prompt}],
     )
 
-    decision = "APPROVED" if criteria_met else "REJECTED"
+    decision_text = response.content[0].text
 
-    audit_trail = [
-        f"✓ Stage 1 [Verification]: {state['stage_1_verification_status'].upper()}",
-        f"✓ Stage 2 [Credit]: {state['stage_2_credit_band']}, Tier: {state['stage_2_risk_tier']}",
-        f"✓ Stage 3 [Risk]: {state['stage_3_risk_classification']}, Score: {state['stage_3_risk_score']:.0f}",
-        f"✓ Stage 4 [Decision]: {decision}",
-    ]
+    # Extract the LLM's decision (not rule-based)
+    decision_upper = decision_text.upper()
 
-    state["stage_4_decision"] = decision
-    state["stage_4_rationale"] = decision_text
-    state["stage_4_audit_trail"] = audit_trail
+    if "DECISION: APPROVED" in decision_upper:
+        final_decision = "APPROVED"  # LLM DECIDED
+    elif "DECISION: REJECTED" in decision_upper:
+        final_decision = "REJECTED"  # LLM DECIDED
+    else:
+        # Ask for clarification
+        clarify = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=10,
+            messages=[
+                {"role": "user", "content": decision_text},
+                {"role": "user", "content": "APPROVED or REJECTED? One word."},
+            ],
+        )
+        text = clarify.content[0].text.upper()
+        final_decision = "APPROVED" if "APPROVED" in text else "REJECTED"
 
-    print(f"  FINAL DECISION: {decision}")
+    state["stage_4_decision"] = final_decision  # LLM DECIDED
+    state["stage_4_rationale"] = decision_text  # LLM REASONING
     return state
