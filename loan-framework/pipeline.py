@@ -1,21 +1,21 @@
 from agents import (
     stage_1_document_verification,
-    stage_2_credit_scoring,
-    stage_3_risk_assessment,
-    stage_4_final_approval,
+    stage_2_credit_assessment_with_discovered_factors,
+    stage_3_risk_assessment_with_discovered_factors,
+    stage_4_final_decision_with_discovered_factors,
 )
 from cso_framework import ContextStateObject
 from langgraph.graph import END, StateGraph
 
 
 def create_workflow():
-    """Create LangGraph workflow"""
+    """Create LangGraph workflow with CSO-aware agents"""
     workflow = StateGraph(ContextStateObject)
 
     workflow.add_node("stage_1", stage_1_document_verification)
-    workflow.add_node("stage_2", stage_2_credit_scoring)
-    workflow.add_node("stage_3", stage_3_risk_assessment)
-    workflow.add_node("stage_4", stage_4_final_approval)
+    workflow.add_node("stage_2", stage_2_credit_assessment_with_discovered_factors)
+    workflow.add_node("stage_3", stage_3_risk_assessment_with_discovered_factors)
+    workflow.add_node("stage_4", stage_4_final_decision_with_discovered_factors)
 
     workflow.add_edge("stage_1", "stage_2")
     workflow.add_edge("stage_2", "stage_3")
@@ -28,4 +28,4 @@ def create_workflow():
 
 
 pipeline = create_workflow()
-print("✓ Pipeline created successfully")
+print("✓ Phase 2 Pipeline created with CSO-aware agents")
