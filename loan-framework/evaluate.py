@@ -14,7 +14,7 @@ from cso.cso_framework import create_cso_from_csv_row
 from pipeline import pipeline
 
 # Load discovered factors info
-with open("discovered_factors.json", "r") as f:
+with open("../factor-discovery/discovered_factors.json", "r") as f:
     factor_info = json.load(f)
 
 print("\n" + "=" * 70)
@@ -27,16 +27,11 @@ print(
 )
 
 # Load full dataset
-df = pd.read_csv("loan.csv")
+test_df = pd.read_csv("test_data.csv")
 
-print(f"Total records in dataset: {len(df)}")
-print(f"Columns in dataset: {len(df.columns)}\n")
+print(f"Total records in test dataset: {len(test_df)}")
+print(f"Columns in dataset: {len(test_df.columns)}\n")
 
-# Split: 80% training (used for factor discovery), 20% test
-train_size = int(0.8 * len(df))
-test_df = df[train_size:].reset_index(drop=True)
-
-print(f"Test dataset size: {len(test_df)}")
 print("Evaluating using discovered factors...\n")
 
 context_aware_results = []
