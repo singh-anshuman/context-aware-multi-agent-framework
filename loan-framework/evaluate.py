@@ -9,8 +9,8 @@ import math
 import time
 
 import pandas as pd
-from baseline_agents import run_baseline_pipeline_phase2
-from cso_framework import create_cso_from_csv_row
+from baseline.baseline_agents import run_baseline_pipeline_phase2
+from cso.cso_framework import create_cso_from_csv_row
 from pipeline import pipeline
 
 # Load discovered factors info
