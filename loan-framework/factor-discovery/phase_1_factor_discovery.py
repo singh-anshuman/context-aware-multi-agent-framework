@@ -158,7 +158,7 @@ def save_discovered_factors(factor_discovery, stats):
 # RUN PHASE 1
 if __name__ == "__main__":
     # Load full dataset
-    df = pd.read_csv("loan.csv")
+    df = pd.read_csv("loan_data.csv")
 
     print(f"\nDataset loaded: {len(df)} records")
     print(f"Columns: {df.columns.tolist()}\n")
