@@ -9,7 +9,7 @@ import json
 import os
 
 from anthropic import Anthropic
-from cso_framework import (
+from cso.cso_framework import (
     ContextStateObject,
     get_all_prior_context,
     get_stage_1_context,

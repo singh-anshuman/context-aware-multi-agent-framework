@@ -14,7 +14,7 @@ from cso.cso_framework import create_cso_from_csv_row
 from pipeline import pipeline
 
 # Load discovered factors info
-with open("../factor-discovery/discovered_factors.json", "r") as f:
+with open("./factor-discovery/discovered_factors.json", "r") as f:
     factor_info = json.load(f)
 
 print("\n" + "=" * 70)

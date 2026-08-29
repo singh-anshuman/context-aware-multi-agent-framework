@@ -9,7 +9,7 @@ import json
 import os
 
 from anthropic import Anthropic
-from cso_framework import ContextStateObject
+from cso.cso_framework import ContextStateObject
 from dotenv import load_dotenv
 
 load_dotenv()  # Load variables from .env file
