@@ -1,11 +1,12 @@
-from cso.agents import (
+from langgraph.graph import END, StateGraph
+
+from ..cso.agents import (
     stage_1_document_verification,
     stage_2_credit_assessment_with_discovered_factors,
     stage_3_risk_assessment_with_discovered_factors,
     stage_4_final_decision_with_discovered_factors,
 )
-from cso.cso_framework import ContextStateObject
-from langgraph.graph import END, StateGraph
+from ..cso.cso_framework import ContextStateObject
 
 
 def create_workflow():

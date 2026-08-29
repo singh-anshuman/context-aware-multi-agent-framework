@@ -10,9 +10,10 @@ import time
 from pathlib import Path
 
 import pandas as pd
-from baseline.baseline_agents import run_baseline_pipeline_phase2
-from cso.cso_framework import create_cso_from_csv_row
 from pipeline import pipeline
+
+from ..baseline.baseline_agents import run_baseline_pipeline_phase2
+from ..cso.cso_framework import create_cso_from_csv_row
 
 # Load discovered factors info
 file_path = (
@@ -55,6 +56,7 @@ for row_number, (_, row) in enumerate(test_df.iterrows()):
     applicant_id = str(row_number)
     cso = create_cso_from_csv_row(row, applicant_id, evaluation_phase="test")
 
+    breakpoint()
     # ========================================================================
     # Run context-aware pipeline (WITH CSO context propagation)
     # ========================================================================
