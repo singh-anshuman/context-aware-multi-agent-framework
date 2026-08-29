@@ -7,6 +7,7 @@ Uses discovered factors to evaluate test applicants with proper CSO flow
 import json
 import math
 import time
+from pathlib import Path
 
 import pandas as pd
 from baseline.baseline_agents import run_baseline_pipeline_phase2
@@ -14,7 +15,13 @@ from cso.cso_framework import create_cso_from_csv_row
 from pipeline import pipeline
 
 # Load discovered factors info
-with open("./factor-discovery/discovered_factors.json", "r") as f:
+file_path = (
+    Path(__file__).resolve().parent.parent
+    / "loan-framework"
+    / "factor-discovery"
+    / "discovered_factors.json"
+)
+with open(file_path, "r") as f:
     factor_info = json.load(f)
 
 print("\n" + "=" * 70)

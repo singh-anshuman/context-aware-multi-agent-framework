@@ -7,6 +7,7 @@ and the ContextStateObject to track state through all stages.
 
 import json
 import os
+from pathlib import Path
 
 from anthropic import Anthropic
 from cso.cso_framework import (
@@ -25,7 +26,13 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 def load_discovered_factors():
     """Load factors discovered from training data"""
     try:
-        with open("discovered_factors.json", "r") as f:
+        file_path = (
+            Path(__file__).resolve().parent.parent
+            / "loan-framework"
+            / "factor-discovery"
+            / "discovered_factors.json"
+        )
+        with open(file_path, "r") as f:
             data = json.load(f)
         return data["discovered_factors"]
     except FileNotFoundError:
