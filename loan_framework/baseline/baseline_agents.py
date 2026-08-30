@@ -9,8 +9,9 @@ import json
 import os
 
 from anthropic import Anthropic
-from cso.cso_framework import ContextStateObject
 from dotenv import load_dotenv
+
+from loan_framework.cso.cso_framework import ContextStateObject
 
 load_dotenv()  # Load variables from .env file
 

@@ -10,12 +10,13 @@ import os
 from pathlib import Path
 
 from anthropic import Anthropic
-from cso.cso_framework import (
+from dotenv import load_dotenv
+
+from loan_framework.cso.cso_framework import (
     ContextStateObject,
     get_all_prior_context,
     get_stage_1_context,
 )
-from dotenv import load_dotenv
 
 load_dotenv()  # Load variables from .env file
 

@@ -10,10 +10,10 @@ import time
 from pathlib import Path
 
 import pandas as pd
-from pipeline import pipeline
 
-from ..baseline.baseline_agents import run_baseline_pipeline_phase2
-from ..cso.cso_framework import create_cso_from_csv_row
+from loan_framework.baseline.baseline_agents import run_baseline_pipeline_phase2
+from loan_framework.cso.cso_framework import create_cso_from_csv_row
+from loan_framework.evaluation.pipeline import pipeline
 
 # Load discovered factors info
 file_path = (
@@ -84,7 +84,7 @@ for row_number, (_, row) in enumerate(test_df.iterrows()):
             }
         )
     except Exception as e:
-        print(f"  Error in context-aware for {row_number}: {str(e)}")
+        print(f"  Error in context-aware for {row_number}: {e!s}")
         context_aware_results.append(
             {
                 "applicant_id": applicant_id,
@@ -121,7 +121,7 @@ for row_number, (_, row) in enumerate(test_df.iterrows()):
             }
         )
     except Exception as e:
-        print(f"  Error in baseline for {row_number}: {str(e)}")
+        print(f"  Error in baseline for {row_number}: {e!s}")
         baseline_results.append(
             {
                 "applicant_id": applicant_id,
