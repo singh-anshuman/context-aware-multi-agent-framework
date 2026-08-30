@@ -28,7 +28,7 @@ def load_discovered_factors():
     """Load factors discovered from training data"""
     try:
         file_path = (
-            Path(__file__).resolve().parent.parent
+            Path(__file__).resolve().parent.parent.parent
             / "loan_framework"
             / "factor_discovery"
             / "discovered_factors.json"
@@ -384,9 +384,10 @@ RATIONALE: [Why, based on discovered factors and prior context]
             final_decision = "REJECTED"
         else:
             # Conservative fallback
-            if cso["stage_1_verification_status"] != "pass":
-                final_decision = "REJECTED"
-            elif cso["stage_3_risk_level"] == "Very High":
+            if (
+                cso["stage_1_verification_status"] != "pass"
+                or cso["stage_3_risk_level"] == "Very High"
+            ):
                 final_decision = "REJECTED"
             else:
                 final_decision = "APPROVED"

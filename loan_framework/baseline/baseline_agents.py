@@ -23,7 +23,7 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 def load_discovered_factors():
     try:
         file_path = (
-            Path(__file__).resolve().parent.parent
+            Path(__file__).resolve().parent.parent.parent
             / "loan_framework"
             / "factor_discovery"
             / "discovered_factors.json"

@@ -17,7 +17,7 @@ from loan_framework.evaluation.pipeline import pipeline
 
 # Load discovered factors info
 file_path = (
-    Path(__file__).resolve().parent.parent
+    Path(__file__).resolve().parent.parent.parent
     / "loan_framework"
     / "factor_discovery"
     / "discovered_factors.json"
@@ -35,7 +35,13 @@ print(
 )
 
 # Load full dataset
-test_df = pd.read_csv("test_data.csv")
+file_path = (
+    Path(__file__).resolve().parent.parent.parent
+    / "loan_framework"
+    / "evaluation"
+    / "test_data.csv"
+)
+test_df = pd.read_csv(file_path)
 
 print(f"Total records in test dataset: {len(test_df)}")
 print(f"Columns in dataset: {len(test_df.columns)}\n")
@@ -56,7 +62,6 @@ for row_number, (_, row) in enumerate(test_df.iterrows()):
     applicant_id = str(row_number)
     cso = create_cso_from_csv_row(row, applicant_id, evaluation_phase="test")
 
-    breakpoint()
     # ========================================================================
     # Run context-aware pipeline (WITH CSO context propagation)
     # ========================================================================
@@ -281,9 +286,6 @@ Baseline Pipeline (NO CSO):
   - No context from prior stages
   - Errors: {bl_errors:,}
 
-Improvement: {(ca_accuracy - bl_accuracy):.2%} (+{((ca_accuracy - bl_accuracy) / bl_accuracy * 100):.1f}%)
+Improvement: {(ca_accuracy - bl_accuracy):.2%} (+{((ca_accuracy - bl_accuracy) / bl_accuracy * 100):.1f}%)""")
 
-This demonstrates that CSO context propagation significantly enhances
-multi-agent decision quality in sequential loan underwriting workflows.
-""")
 print("=" * 70)
