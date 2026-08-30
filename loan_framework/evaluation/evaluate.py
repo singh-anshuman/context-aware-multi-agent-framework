@@ -18,8 +18,8 @@ from loan_framework.evaluation.pipeline import pipeline
 # Load discovered factors info
 file_path = (
     Path(__file__).resolve().parent.parent
-    / "loan-framework"
-    / "factor-discovery"
+    / "loan_framework"
+    / "factor_discovery"
     / "discovered_factors.json"
 )
 with open(file_path, "r") as f:

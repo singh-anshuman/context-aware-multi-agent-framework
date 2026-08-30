@@ -7,6 +7,7 @@ but WITHOUT reading prior stage context (no CSO propagation).
 
 import json
 import os
+from pathlib import Path
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -21,7 +22,13 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 # Load discovered factors
 def load_discovered_factors():
     try:
-        with open("discovered_factors.json", "r") as f:
+        file_path = (
+            Path(__file__).resolve().parent.parent
+            / "loan_framework"
+            / "factor_discovery"
+            / "discovered_factors.json"
+        )
+        with open(file_path, "r") as f:
             data = json.load(f)
         return data["discovered_factors"]
     except FileNotFoundError:
