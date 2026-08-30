@@ -1,3 +1,0 @@
-applicant_id,ground_truth,bl_decision,bl_confidence,bl_matches_ground,bl_stage_1,bl_stage_2,bl_stage_3,bl_stage_4,bl_time,bl_used_prior_context
-0,0,APPROVED,0.75,False,fail,Excellent,High,APPROVED,13.04055666923523,False
-1,0,APPROVED,0.75,False,pass,Good,High,APPROVED,13.289814710617065,False

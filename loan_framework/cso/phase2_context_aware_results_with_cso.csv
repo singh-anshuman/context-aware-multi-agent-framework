@@ -1,3 +1,0 @@
-applicant_id,ground_truth,ca_decision,ca_confidence,ca_matches_ground,ca_stage_1,ca_stage_2,ca_stage_3,ca_stage_4,ca_time,ca_used_prior_context
-0,0,APPROVED,0.8,False,fail,Good,High,APPROVED,21.84435749053955,True
-1,0,APPROVED,0.8,False,pass,Good,High,APPROVED,21.78427815437317,True
