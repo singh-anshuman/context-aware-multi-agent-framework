@@ -3,10 +3,10 @@ from pathlib import Path
 import pandas as pd
 
 base_dir = Path(__file__).resolve().parent.parent
-dataset_dir = base_dir / 'dataset'
-source_file = dataset_dir / 'financial_risk_for_loan_approval.csv'
-train_file = dataset_dir / 'train_data.csv'
-test_file = dataset_dir / 'test_data.csv'
+dataset_dir = base_dir / "dataset"
+source_file = dataset_dir / "loan_data_full.csv"
+train_file = dataset_dir / "train_data.csv"
+test_file = dataset_dir / "test_data.csv"
 
 df = pd.read_csv(source_file)
 print(f"Total records: {len(df)}")

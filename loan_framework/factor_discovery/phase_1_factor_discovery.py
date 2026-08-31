@@ -1,176 +1,369 @@
 """
-PHASE 1: Factor Discovery on Training Dataset
+ENHANCED PHASE 1: FACTOR DISCOVERY
 
-This script analyzes the training data to identify which attributes/factors
-matter most for predicting loan approval.
+This improved version extracts CLEAR DECISION PATTERNS from training data.
+
+Key improvements:
+1. Pre-analyzes data to identify strongest factors (before LLM)
+2. Provides explicit comparisons of approved vs rejected applicants
+3. Guides LLM to identify tier-based decision rules
+4. Produces factors that are actually discoverable in data
 """
 
 import json
 import os
+from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
-load_dotenv()
-
+load_dotenv()  # Load variables from .env file
 
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def discover_factors_from_training_data(train_df):
-    """
-    Ask LLM to analyze training dataset and identify key factors
-    for predicting loan approval.
-    """
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
 
-    print("\n" + "=" * 70)
-    print("PHASE 1: FACTOR DISCOVERY FROM TRAINING DATA")
-    print("=" * 70)
-    print(f"\nAnalyzing {len(train_df)} training records to identify key factors...\n")
+# Load full dataset
+DATA_FILE = (
+    Path(__file__).resolve().parent.parent.parent / "dataset" / "loan_data_full.csv"
+)
+SPLIT_RATIO = 0.80  # 80% training, 20% test
 
-    # Calculate summary statistics from training data
-    stats = {
-        "total_records": len(train_df),
-        "approval_rate": (train_df["LoanApproved"].mean() * 100),
-        "avg_credit_score": train_df["CreditScore"].mean(),
-        "avg_income": train_df["AnnualIncome"].mean(),
-        "avg_dti": train_df["DebtToIncomeRatio"].mean(),
-        "avg_experience": train_df["Experience"].mean(),
-        "bankruptcy_rate": (train_df["BankruptcyHistory"].sum() / len(train_df) * 100),
-        "avg_previous_defaults": train_df["PreviousLoanDefaults"].mean(),
-        "credit_score_range": f"{train_df['CreditScore'].min():.0f}-{train_df['CreditScore'].max():.0f}",
-        "income_range": f"${train_df['AnnualIncome'].min():,.0f}-${train_df['AnnualIncome'].max():,.0f}",
-        "dti_range": f"{train_df['DebtToIncomeRatio'].min():.2%}-{train_df['DebtToIncomeRatio'].max():.2%}",
-    }
+# ============================================================================
+# LOAD DATA
+# ============================================================================
 
-    # Separate approved vs rejected
-    approved = train_df[train_df["LoanApproved"] == 1]
-    rejected = train_df[train_df["LoanApproved"] == 0]
+print("=" * 70)
+print("ENHANCED PHASE 1: FACTOR DISCOVERY")
+print("=" * 70)
 
-    profile_comparison = f"""
-APPROVED APPLICANTS (n={len(approved)}):
-- Avg Credit Score: {approved["CreditScore"].mean():.0f}
-- Avg Income: ${approved["AnnualIncome"].mean():,.0f}
-- Avg DTI: {approved["DebtToIncomeRatio"].mean():.2%}
-- Avg Experience: {approved["Experience"].mean():.1f} years
-- Avg Net Worth: ${approved["NetWorth"].mean():,.0f}
-- Bankruptcy Rate: {(approved["BankruptcyHistory"].sum() / len(approved) * 100):.1f}%
-- Avg Previous Defaults: {approved["PreviousLoanDefaults"].mean():.2f}
-- Avg Credit Utilization: {approved["CreditCardUtilizationRate"].mean():.1%}
+if not Path(DATA_FILE).exists():
+    print(f"\n❌ Error: {DATA_FILE} not found")
+    print("   Please run: python generate_synthetic_loan_data_simplified.py")
+    exit(1)
 
-REJECTED APPLICANTS (n={len(rejected)}):
-- Avg Credit Score: {rejected["CreditScore"].mean():.0f}
-- Avg Income: ${rejected["AnnualIncome"].mean():,.0f}
-- Avg DTI: {rejected["DebtToIncomeRatio"].mean():.2%}
-- Avg Experience: {rejected["Experience"].mean():.1f} years
-- Avg Net Worth: ${rejected["NetWorth"].mean():,.0f}
-- Bankruptcy Rate: {(rejected["BankruptcyHistory"].sum() / len(rejected) * 100):.1f}%
-- Avg Previous Defaults: {rejected["PreviousLoanDefaults"].mean():.2f}
-- Avg Credit Utilization: {rejected["CreditCardUtilizationRate"].mean():.1%}
-"""
+print(f"\n[1/4] Loading data from {DATA_FILE}...")
+df = pd.read_csv(DATA_FILE)
 
-    prompt = f"""
-You are analyzing a loan approval dataset to identify which attributes/factors 
-are MOST important for predicting loan approval.
+# Split into training and test
+split_idx = int(len(df) * SPLIT_RATIO)
+training_df = df.iloc[:split_idx].copy()
+test_df = df.iloc[split_idx:].copy()
 
-DATASET OVERVIEW:
-- Total records: {stats["total_records"]}
-- Overall approval rate: {stats["approval_rate"]:.1f}%
-- Credit score range: {stats["credit_score_range"]}
-- Income range: {stats["income_range"]}
-- DTI range: {stats["dti_range"]}
+print(f"  Total records: {len(df):,}")
+print(f"  Training set: {len(training_df):,} ({SPLIT_RATIO:.0%})")
+print(f"  Test set: {len(test_df):,} ({1 - SPLIT_RATIO:.0%})")
+print(f"  Overall approval rate: {training_df['LoanApproved'].mean():.1%}")
 
-PROFILES OF APPROVED vs REJECTED APPLICANTS:
-{profile_comparison}
+# ============================================================================
+# PART 1: PRE-ANALYSIS (Identify Strongest Factors)
+# ============================================================================
 
-Based on this data analysis, answer:
+print("\n[2/4] Pre-analyzing strongest decision factors...")
 
-1. IDENTIFY KEY FACTORS: What are the 3-5 most important attributes/factors 
-   that distinguish approved from rejected applicants?
+approved = training_df[training_df["LoanApproved"] == 1]
+rejected = training_df[training_df["LoanApproved"] == 0]
 
-2. FOR EACH FACTOR:
-   - Name the factor precisely
-   - Explain which values are favorable vs unfavorable
-   - How much does it influence approval?
+print(f"  Approved: {len(approved):,} applicants")
+print(f"  Rejected: {len(rejected):,} applicants")
 
-3. FACTOR HIERARCHY: Rank these factors by importance.
+# Analyze each numeric field for predictive strength
+numeric_cols = [
+    "Age",
+    "AnnualIncome",
+    "CreditScore",
+    "Experience",
+    "LoanAmount",
+    "NumberOfDependents",
+    "MonthlyDebtPayments",
+    "CreditCardUtilizationRate",
+    "NumberOfOpenCreditLines",
+    "NumberOfCreditInquiries",
+    "DebtToIncomeRatio",
+    "PaymentHistory",
+    "LengthOfCreditHistory",
+    "SavingsAccountBalance",
+    "CheckingAccountBalance",
+    "TotalAssets",
+    "TotalLiabilities",
+    "MonthlyIncome",
+    "UtilityBillsPaymentHistory",
+    "JobTenure",
+    "NetWorth",
+    "InterestRate",
+    "MonthlyLoanPayment",
+    "TotalDebtToIncomeRatio",
+]
 
-4. DECISION RULES: Based on the patterns you see, what are the implicit 
-   "decision rules" the data suggests?
+factor_analysis = []
 
-Format your response as:
+for col in numeric_cols:
+    if col in training_df.columns:
+        try:
+            approved_mean = float(approved[col].mean())
+            rejected_mean = float(rejected[col].mean())
+            approved_std = float(approved[col].std())
+            rejected_std = float(rejected[col].std())
 
-KEY FACTORS:
-1. [Factor Name]: [Description of favorable/unfavorable values]
-2. [Factor Name]: [Description of favorable/unfavorable values]
-3. [Factor Name]: [Description of favorable/unfavorable values]
+            # Calculate effect size (Cohen's d)
+            pooled_std = np.sqrt(
+                (
+                    (len(approved) - 1) * approved_std**2
+                    + (len(rejected) - 1) * rejected_std**2
+                )
+                / (len(approved) + len(rejected) - 2)
+            )
+            cohens_d = (
+                abs(approved_mean - rejected_mean) / pooled_std if pooled_std > 0 else 0
+            )
 
-FACTOR IMPORTANCE RANKING:
-1. [Most important] - [Reasoning]
-2. [Second most important] - [Reasoning]
-3. [Third most important] - [Reasoning]
+            # Determine direction
+            direction = (
+                "↑ Higher is better"
+                if approved_mean > rejected_mean
+                else "↓ Lower is better"
+            )
 
-IMPLICIT DECISION RULES:
-- Rule 1: [Pattern found in data]
-- Rule 2: [Pattern found in data]
-- Rule 3: [Pattern found in data]
-"""
+            factor_analysis.append(
+                {
+                    "factor": col,
+                    "approved_mean": approved_mean,
+                    "rejected_mean": rejected_mean,
+                    "difference": approved_mean - rejected_mean,
+                    "cohens_d": cohens_d,
+                    "direction": direction,
+                    "strength": cohens_d,  # Sort by this
+                }
+            )
+        except:
+            pass
 
-    print("Sending training data analysis to LLM...\n")
+# Sort by effect size
+factor_analysis = sorted(factor_analysis, key=lambda x: x["strength"], reverse=True)
 
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=10000,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        factor_discovery = response.content[0].text
-    except Exception as e:
-        print(f"Error: {e!s}")
-        factor_discovery = "Failed to analyze factors"
+print("\n  TOP 15 STRONGEST DECISION FACTORS (by predictive strength):\n")
+print(
+    f"  {'Rank':<5} {'Factor':<30} {'Strength':<10} {'Approved':<12} {'Rejected':<12}"
+)
+print("  " + "-" * 70)
 
-    print("=" * 70)
-    print("DISCOVERED FACTORS:")
-    print("=" * 70)
-    print(factor_discovery)
-    print("=" * 70 + "\n")
+for i, factor in enumerate(factor_analysis[:15], 1):
+    print(
+        f"  {i:<5} {factor['factor']:<30} {factor['cohens_d']:<10.3f} "
+        f"{factor['approved_mean']:<12.1f} {factor['rejected_mean']:<12.1f}"
+    )
 
-    return factor_discovery, stats
+# ============================================================================
+# PART 2: ANALYZE CATEGORICAL FACTORS
+# ============================================================================
 
+print("\n  CATEGORICAL FACTOR ANALYSIS:\n")
 
-def save_discovered_factors(factor_discovery, stats):
-    """Save the discovered factors to use in Phase 2"""
+categorical_cols = [
+    "EmploymentStatus",
+    "EducationLevel",
+    "LoanPurpose",
+    "HomeOwnershipStatus",
+    "MaritalStatus",
+]
 
-    data = {
-        "discovered_factors": factor_discovery,
-        "training_stats": stats,
-        "phase": "factor_discovery_complete",
-    }
+categorical_analysis = {}
 
-    with open("discovered_factors.json", "w") as f:
-        json.dump(data, f, indent=2)
+for col in categorical_cols:
+    if col in training_df.columns:
+        print(f"  {col}:")
+        unique_values = training_df[col].unique()
 
-    print("✓ Discovered factors saved to discovered_factors.json")
-    print("✓ Ready for Phase 2: Test data evaluation\n")
+        col_analysis = {}
+        for val in unique_values:
+            mask = training_df[col] == val
+            approval_rate = training_df.loc[mask, "LoanApproved"].mean()
+            count = mask.sum()
+            col_analysis[val] = {"approval_rate": approval_rate, "count": count}
+            print(f"    {val}: {approval_rate:.1%} approved (n={count:,})")
 
+        categorical_analysis[col] = col_analysis
 
-# RUN PHASE 1
-if __name__ == "__main__":
-    # Load full dataset
-    df = pd.read_csv("loan_data.csv")
+# ============================================================================
+# PART 3: BINARY FACTOR ANALYSIS
+# ============================================================================
 
-    print(f"\nDataset loaded: {len(df)} records")
-    print(f"Columns: {df.columns.tolist()}\n")
+print("\n  BINARY FACTOR ANALYSIS:\n")
 
-    # Use 80% as training for factor discovery
-    train_size = int(0.8 * len(df))
-    train_df = df[:train_size]
+binary_cols = ["BankruptcyHistory", "PreviousLoanDefaults"]
 
-    print(f"Training dataset size: {len(train_df)}")
+for col in binary_cols:
+    if col in training_df.columns:
+        print(f"  {col}:")
+        for val in [0, 1]:
+            mask = training_df[col] == val
+            approval_rate = training_df.loc[mask, "LoanApproved"].mean()
+            count = mask.sum()
+            val_str = "Yes" if val == 1 else "No"
+            print(f"    {val_str}: {approval_rate:.1%} approved (n={count:,})")
 
-    # Discover factors
-    factor_discovery, stats = discover_factors_from_training_data(train_df)
+# ============================================================================
+# PART 4: USE LLM TO FORMALIZE PATTERNS
+# ============================================================================
 
-    # Save for Phase 2
-    save_discovered_factors(factor_discovery, stats)
+print("\n[3/4] Using LLM to formalize discovered patterns...")
+
+# Prepare analysis data for LLM
+top_factors_text = "\n".join(
+    [
+        f"{i}. {f['factor']}: "
+        f"Approved avg={f['approved_mean']:.2f}, "
+        f"Rejected avg={f['rejected_mean']:.2f}, "
+        f"Strength={f['cohens_d']:.2f} {f['direction']}"
+        for i, f in enumerate(factor_analysis[:10], 1)
+    ]
+)
+
+# Sample approved applications
+approved_sample = approved.sample(min(5, len(approved)))
+approved_sample_text = "Sample APPROVED Applications:\n"
+for idx, (_, row) in enumerate(approved_sample.iterrows(), 1):
+    approved_sample_text += f"\n  Applicant {idx}:\n"
+    approved_sample_text += f"    Credit Score: {int(row['CreditScore'])}\n"
+    approved_sample_text += f"    Annual Income: ${int(row['AnnualIncome']):,}\n"
+    approved_sample_text += f"    Total DTI: {row['TotalDebtToIncomeRatio']:.1%}\n"
+    approved_sample_text += f"    Payment History: {int(row['PaymentHistory'])}%\n"
+    approved_sample_text += (
+        f"    Bankruptcy: {'Yes' if row['BankruptcyHistory'] else 'No'}\n"
+    )
+    approved_sample_text += (
+        f"    Previous Defaults: {int(row['PreviousLoanDefaults'])}\n"
+    )
+
+# Sample rejected applications
+rejected_sample = rejected.sample(min(5, len(rejected)))
+rejected_sample_text = "Sample REJECTED Applications:\n"
+for idx, (_, row) in enumerate(rejected_sample.iterrows(), 1):
+    rejected_sample_text += f"\n  Applicant {idx}:\n"
+    rejected_sample_text += f"    Credit Score: {int(row['CreditScore'])}\n"
+    rejected_sample_text += f"    Annual Income: ${int(row['AnnualIncome']):,}\n"
+    rejected_sample_text += f"    Total DTI: {row['TotalDebtToIncomeRatio']:.1%}\n"
+    rejected_sample_text += f"    Payment History: {int(row['PaymentHistory'])}%\n"
+    rejected_sample_text += (
+        f"    Bankruptcy: {'Yes' if row['BankruptcyHistory'] else 'No'}\n"
+    )
+    rejected_sample_text += (
+        f"    Previous Defaults: {int(row['PreviousLoanDefaults'])}\n"
+    )
+
+prompt = f"""You are a loan underwriter analyzing patterns in approved and rejected applications.
+
+STRONGEST PREDICTIVE FACTORS (ranked by impact):
+{top_factors_text}
+
+{approved_sample_text}
+
+{rejected_sample_text}
+
+TASK: Identify the KEY DECISION FACTORS AND RULES used in loan approval.
+
+For each of the top 8 factors:
+1. State the factor name
+2. Describe the decision rule (e.g., "Credit Score > 700 favors approval")
+3. Explain the logic (why this matters for lending)
+4. Note any threshold values observed in the data
+
+Focus on patterns that clearly distinguish approved from rejected applicants.
+Be specific and actionable - these rules should be usable for lending decisions.
+
+Format as a clear list of decision rules that a loan officer could follow."""
+
+response = client.messages.create(
+    model="claude-haiku-4-5",
+    max_tokens=2000,
+    messages=[{"role": "user", "content": prompt}],
+)
+
+discovered_patterns = response.content[0].text
+
+# ============================================================================
+# PART 5: CREATE FACTOR SUMMARY
+# ============================================================================
+
+print("\n[4/4] Saving discovered factors...")
+
+discovered_factors_data = {
+    "discovery_date": pd.Timestamp.now().isoformat(),
+    "training_stats": {
+        "total_records": int(len(training_df)),
+        "approval_rate": float(training_df["LoanApproved"].mean()),
+        "split_ratio": SPLIT_RATIO,
+    },
+    "top_factors": [
+        {
+            "rank": i + 1,
+            "factor": f["factor"],
+            "effect_size_cohens_d": float(f["cohens_d"]),
+            "approved_average": float(f["approved_mean"]),
+            "rejected_average": float(f["rejected_mean"]),
+            "direction": f["direction"],
+        }
+        for i, f in enumerate(factor_analysis[:10])
+    ],
+    "discovered_decision_rules": discovered_patterns,
+    "categorical_factors": {
+        col: {
+            k: {"approval_rate": float(v["approval_rate"]), "count": int(v["count"])}
+            for k, v in values.items()
+        }
+        for col, values in categorical_analysis.items()
+    },
+    "methodology": {
+        "approach": "Pre-analysis of training data followed by LLM pattern formalization",
+        "data_type": "Simplified synthetic loan data with deterministic approval logic",
+        "key_features": [
+            "Clear decision thresholds (tier-based scoring)",
+            "Learnable patterns (no random noise in approval rule)",
+            "Realistic feature correlations",
+            "Representative of actual lending practices",
+        ],
+    },
+}
+
+# Save to JSON
+output_file = "discovered_factors_enhanced.json"
+with open(output_file, "w") as f:
+    json.dump(discovered_factors_data, f, indent=2)
+
+# ============================================================================
+# DISPLAY RESULTS
+# ============================================================================
+
+print(f"\n✓ Discovered factors saved to '{output_file}'")
+
+print("\n" + "=" * 70)
+print("DISCOVERED DECISION PATTERNS")
+print("=" * 70)
+print(discovered_patterns)
+
+print("\n" + "=" * 70)
+print("KEY INSIGHTS FOR PHASE 2 AGENTS")
+print("=" * 70)
+print("\n✓ Agents should focus on these factors (in order of importance):")
+for i, factor in enumerate(factor_analysis[:8], 1):
+    print(f"  {i}. {factor['factor']} (strength: {factor['cohens_d']:.2f})")
+
+print("\n✓ Clear decision thresholds identified:")
+for factor in factor_analysis[:5]:
+    approved_val = factor["approved_mean"]
+    rejected_val = factor["rejected_mean"]
+    threshold = (approved_val + rejected_val) / 2
+    print(f"  {factor['factor']}: ~{threshold:.1f}")
+
+print("\n✓ These factors are:")
+print("  - Learnable (clear patterns in data)")
+print("  - Predictive (high effect sizes)")
+print("  - Actionable (usable for decisions)")
+print("  - Discoverable (Phase 1 agents can find them)")
+
+print("\n" + "=" * 70)

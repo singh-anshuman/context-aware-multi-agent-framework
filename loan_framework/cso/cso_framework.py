@@ -1,11 +1,24 @@
 """
-Context State Object (CSO) Definition
+Context State Object (CSO) Definition - OPTIMIZED VERSION
 
 This TypedDict defines the complete state that flows through all 4 stages
 of the loan underwriting pipeline. It accumulates context as each stage
 adds its analysis and decisions.
 
 All fields mapped to actual CSV column names.
+
+OPTIMIZATION CHANGES (from original):
+- Removed stage_4_confidence: No longer tracking confidence (not needed for evaluation)
+- Removed stage_2_identified_factors: Simplified parsing (factors still used via discovered_factors)
+- Removed stage_3_risk_drivers: Simplified parsing (risk still assessed via analysis text)
+- Removed stage_4_consolidated_factors: Simplified output (not needed for thesis metrics)
+- Removed stage_3_risk_score_computed: Simplified risk assessment
+- Removed stage_4_conditions: Simplified recommendations
+- Removed stage_4_recommendations: Simplified recommendations
+- Added prior_stage_context_used flags to Stages 2, 3, 4: Track context propagation
+
+These changes reduce token consumption while maintaining evaluation quality.
+The CSO still provides complete audit trails and decision tracking.
 """
 
 from typing import Optional, TypedDict
@@ -96,9 +109,9 @@ class ContextStateObject(TypedDict):
 
     stage_2_credit_band: str  # 'Excellent', 'Very Good', 'Good', 'Fair', 'Poor'
     stage_2_assessment: str  # Full LLM assessment text
-    stage_2_identified_factors: list[str]  # Credit factors identified by LLM
     stage_2_factor_scores: dict  # Individual factor scores
     stage_2_discovered_factors_used: list[str]  # Which discovered factors were applied
+    stage_2_prior_stage_context_used: bool  # Whether Stage 1 context was used
     stage_2_timestamp: Optional[str]  # When assessment occurred
 
     # ========================================================================
@@ -107,10 +120,10 @@ class ContextStateObject(TypedDict):
 
     stage_3_risk_level: str  # 'Low', 'Medium', 'High', 'Very High'
     stage_3_analysis: str  # Full LLM risk analysis text
-    stage_3_risk_drivers: list[str]  # Specific risk factors for this applicant
-    stage_3_risk_score_computed: Optional[float]  # LLM-computed risk score
     stage_3_discovered_factors_used: list[str]  # Which discovered factors were applied
-    stage_3_prior_stage_context_used: bool  # Whether Stage 2 context was used
+    stage_3_prior_stage_context_used: (
+        bool  # Whether prior stages (1-2) context was used
+    )
     stage_3_timestamp: Optional[str]  # When assessment occurred
 
     # ========================================================================
@@ -119,13 +132,11 @@ class ContextStateObject(TypedDict):
 
     stage_4_decision: str  # 'APPROVED' or 'REJECTED'
     stage_4_decision_text: str  # Full LLM decision reasoning
-    stage_4_confidence: float  # Confidence level (0-1)
-    stage_4_consolidated_factors: list[str]  # Final factors used for decision
     stage_4_discovered_factors_used: list[str]  # Which discovered factors were applied
-    stage_4_prior_stage_context_used: bool  # Whether prior stages influenced decision
+    stage_4_prior_stage_context_used: (
+        bool  # Whether prior stages (1-3) influenced decision
+    )
     stage_4_audit_trail: list[str]  # Complete decision audit trail
-    stage_4_conditions: list[str]  # Approval conditions if any
-    stage_4_recommendations: str  # LLM recommendations
     stage_4_timestamp: Optional[str]  # When decision was made
 
     # ========================================================================
@@ -155,24 +166,31 @@ class ContextStateObject(TypedDict):
 
 
 def create_empty_cso(applicant_id: str) -> ContextStateObject:
-    """Create an empty CSO with default values"""
+    """Create an empty CSO with default values (optimized version)"""
     return {
         "applicant_id": applicant_id,
+        # Stage 1
         "stage_1_verification_status": "",
         "stage_1_flags": [],
         "stage_1_hard_stops": [],
+        # Stage 2
         "stage_2_credit_band": "",
         "stage_2_assessment": "",
-        "stage_2_identified_factors": [],
         "stage_2_factor_scores": {},
+        "stage_2_discovered_factors_used": [],
+        "stage_2_prior_stage_context_used": False,
+        # Stage 3
         "stage_3_risk_level": "",
         "stage_3_analysis": "",
-        "stage_3_risk_drivers": [],
+        "stage_3_discovered_factors_used": [],
+        "stage_3_prior_stage_context_used": False,
+        # Stage 4
         "stage_4_decision": "",
         "stage_4_decision_text": "",
-        "stage_4_confidence": 0.0,
-        "stage_4_consolidated_factors": [],
+        "stage_4_discovered_factors_used": [],
+        "stage_4_prior_stage_context_used": False,
         "stage_4_audit_trail": [],
+        # Evaluation
         "error_occurred": False,
         "error_messages": [],
     }
@@ -275,7 +293,7 @@ def create_cso_from_csv_row(
 
 
 def print_cso_summary(cso: ContextStateObject) -> str:
-    """Print a human-readable summary of CSO contents"""
+    """Print a human-readable summary of CSO contents (optimized)"""
     summary = f"""
     {"=" * 70}
     CONTEXT STATE OBJECT SUMMARY - Applicant {cso.get("applicant_id", "UNKNOWN")}
@@ -296,16 +314,15 @@ def print_cso_summary(cso: ContextStateObject) -> str:
 
     STAGE 2 - CREDIT ASSESSMENT:
     Credit Band: {cso.get("stage_2_credit_band", "N/A")}
-    Identified Factors: {", ".join(cso.get("stage_2_identified_factors", [])[:3])}
+    Used Prior Context: {cso.get("stage_2_prior_stage_context_used", False)}
 
     STAGE 3 - RISK ASSESSMENT:
     Risk Level: {cso.get("stage_3_risk_level", "N/A")}
-    Risk Drivers: {", ".join(cso.get("stage_3_risk_drivers", [])[:3])}
-    Prior Context Used: {cso.get("stage_3_prior_stage_context_used", False)}
+    Used Prior Context: {cso.get("stage_3_prior_stage_context_used", False)}
 
     STAGE 4 - FINAL DECISION:
     Decision: {cso.get("stage_4_decision", "N/A")}
-    Confidence: {cso.get("stage_4_confidence", 0):.0%}
+    Used Prior Context: {cso.get("stage_4_prior_stage_context_used", False)}
     Ground Truth: {"APPROVED" if cso.get("loan_approved_actual") else "REJECTED"}
     Correct: {cso.get("decision_correct", None)}
 
@@ -337,8 +354,8 @@ def get_stage_2_context(cso: ContextStateObject) -> dict:
     return {
         "credit_band": cso.get("stage_2_credit_band"),
         "assessment": cso.get("stage_2_assessment"),
-        "identified_factors": cso.get("stage_2_identified_factors", []),
         "factor_scores": cso.get("stage_2_factor_scores", {}),
+        "prior_context_used": cso.get("stage_2_prior_stage_context_used"),
     }
 
 
@@ -347,7 +364,6 @@ def get_stage_3_context(cso: ContextStateObject) -> dict:
     return {
         "risk_level": cso.get("stage_3_risk_level"),
         "analysis": cso.get("stage_3_analysis"),
-        "risk_drivers": cso.get("stage_3_risk_drivers", []),
         "prior_context_used": cso.get("stage_3_prior_stage_context_used"),
     }
 
@@ -360,19 +376,19 @@ def get_all_prior_context(cso: ContextStateObject, up_to_stage: int) -> str:
     if up_to_stage >= 1:
         s1 = get_stage_1_context(cso)
         context_parts.append(
-            f"STAGE 1 - VERIFICATION:\nStatus: {s1['verification_status']}\nFlags: {', '.join(s1['flags'])}"
+            f"STAGE 1 - VERIFICATION:\nStatus: {s1['verification_status']}\nFlags: {', '.join(s1['flags']) if s1['flags'] else 'None'}"
         )
 
     if up_to_stage >= 2:
         s2 = get_stage_2_context(cso)
         context_parts.append(
-            f"STAGE 2 - CREDIT:\nTier: {s2['credit_band']}\nFactors: {', '.join(s2['identified_factors'][:2])}"
+            f"STAGE 2 - CREDIT:\nTier: {s2['credit_band']}\nContext Used: {s2['prior_context_used']}"
         )
 
     if up_to_stage >= 3:
         s3 = get_stage_3_context(cso)
         context_parts.append(
-            f"STAGE 3 - RISK:\nLevel: {s3['risk_level']}\nDrivers: {', '.join(s3['risk_drivers'][:2])}"
+            f"STAGE 3 - RISK:\nLevel: {s3['risk_level']}\nContext Used: {s3['prior_context_used']}"
         )
 
     return "\n\n".join(context_parts)

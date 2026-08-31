@@ -1,17 +1,197 @@
 {
-  "discovered_factors": "# LOAN APPROVAL ANALYSIS\n\n## KEY FACTORS:\n\n1. **Income Level**: Favorable values are higher incomes ($102K+ approved vs $45K+ rejected). Approved applicants earn 2.24x more on average, indicating strong repayment capacity.\n\n2. **Bankruptcy History**: Favorable values are no bankruptcy; unfavorable is past bankruptcy. Approved applicants have 2.36x lower bankruptcy rate (2.5% vs 5.9%), demonstrating financial stability and creditworthiness.\n\n3. **Credit Score**: Favorable values are higher scores (584 approved vs 568 rejected). While the difference is modest (16 points), approved applicants maintain consistently higher credit scores, suggesting better credit management.\n\n4. **Previous Defaults**: Favorable values are zero or minimal defaults; unfavorable is multiple defaults. Approved applicants have 45% fewer defaults (0.06 vs 0.11), showing reliable payment history.\n\n5. **Work Experience**: Favorable values are longer tenure (20.3 years approved vs 16.6 years rejected). More experienced applicants show 22% longer employment history, suggesting income stability.\n\n---\n\n## FACTOR IMPORTANCE RANKING:\n\n1. **Income Level** - MOST IMPORTANT\n   - *Reasoning*: 2.24x difference between approved and rejected ($102K vs $45K) is the largest gap among all factors. Income directly determines repayment capacity and is likely the primary decision driver.\n\n2. **Bankruptcy History** - SECOND MOST IMPORTANT\n   - *Reasoning*: 2.36x difference in bankruptcy rates (2.5% vs 5.9%) is the second-largest proportional gap. Past bankruptcy is a major red flag for future default risk.\n\n3. **Previous Defaults** - THIRD MOST IMPORTANT\n   - *Reasoning*: 45% difference in default history (0.06 vs 0.11) directly measures past payment behavior, a strong predictor of future performance.\n\n4. **Credit Score** - FOURTH MOST IMPORTANT\n   - *Reasoning*: Only 16-point difference (584 vs 568) suggests credit score is less discriminative than income/bankruptcy, though still relevant for risk assessment.\n\n5. **Work Experience** - LEAST IMPORTANT\n   - *Reasoning*: 22% difference (20.3 vs 16.6 years) shows the smallest impact; may be a secondary indicator of income stability rather than primary decision factor.\n\n---\n\n## IMPLICIT DECISION RULES:\n\n- **Rule 1 - Income Threshold Rule**: Applicants with income significantly above ~$45K are substantially more likely to be approved. Income appears to be a primary gating criterion, with approved applicants earning 2.2x more.\n\n- **Rule 2 - Bankruptcy Disqualifier**: Bankruptcy history is heavily penalizing; 5.9% bankruptcy rate in rejected vs 2.5% in approved suggests this is near-disqualifying factor or requires significant compensating factors.\n\n- **Rule 3 - Default History Screening**: Previous defaults act as a risk multiplier; applicants with clean payment history (0.06 avg defaults) are 45% more likely to be approved than those with payment issues (0.11 avg).\n\n- **Rule 4 - Credit Score as Secondary Filter**: Credit score acts as a secondary refinement after income/bankruptcy screening. The modest 16-point difference suggests it matters only after major factors are satisfied.\n\n- **Rule 5 - Net Worth Amplification**: Approved applicants have 1.91x higher net worth ($113K vs $59K), suggesting this serves as a safety net indicator\u2014applicants with assets can weather financial hardship.\n\n- **Rule 6 - DTI Non-Discriminator**: Nearly identical DTI ratios (28.70% vs 28.68%) indicate this factor is NOT a primary decision driver despite being calculated similarly for both groups.",
+  "discovery_date": "2026-08-31T19:23:56.836960",
   "training_stats": {
     "total_records": 16000,
-    "approval_rate": 23.925,
-    "avg_credit_score": 571.7991875,
-    "avg_income": 59205.0743125,
-    "avg_dti": 0.2868492538313357,
-    "avg_experience": 17.4881875,
-    "bankruptcy_rate": 5.0874999999999995,
-    "avg_previous_defaults": 0.0989375,
-    "credit_score_range": "343-712",
-    "income_range": "$15,000-$485,341",
-    "dti_range": "0.17%-90.23%"
+    "approval_rate": 0.0883125,
+    "split_ratio": 0.8
   },
-  "phase": "factor_discovery_complete"
+  "top_factors": [
+    {
+      "rank": 1,
+      "factor": "CreditScore",
+      "effect_size_cohens_d": 1.5310517806024844,
+      "approved_average": 635.2300070771408,
+      "rejected_average": 568.9879344621924,
+      "direction": "\u2191 Higher is better"
+    },
+    {
+      "rank": 2,
+      "factor": "MonthlyIncome",
+      "effect_size_cohens_d": 1.224838290853537,
+      "approved_average": 7058.033203585752,
+      "rejected_average": 4010.557876876671,
+      "direction": "\u2191 Higher is better"
+    },
+    {
+      "rank": 3,
+      "factor": "AnnualIncome",
+      "effect_size_cohens_d": 1.2248382908535365,
+      "approved_average": 84696.39844302901,
+      "rejected_average": 48126.694522520054,
+      "direction": "\u2191 Higher is better"
+    },
+    {
+      "rank": 4,
+      "factor": "TotalDebtToIncomeRatio",
+      "effect_size_cohens_d": 0.8582110575292048,
+      "approved_average": 0.22310685993308713,
+      "rejected_average": 0.511153875877802,
+      "direction": "\u2193 Lower is better"
+    },
+    {
+      "rank": 5,
+      "factor": "DebtToIncomeRatio",
+      "effect_size_cohens_d": 0.8017712540425513,
+      "approved_average": 0.11540186747343863,
+      "rejected_average": 0.242447395706916,
+      "direction": "\u2193 Lower is better"
+    },
+    {
+      "rank": 6,
+      "factor": "InterestRate",
+      "effect_size_cohens_d": 0.43550720264661835,
+      "approved_average": 0.14386872493971223,
+      "rejected_average": 0.14611580485668027,
+      "direction": "\u2193 Lower is better"
+    },
+    {
+      "rank": 7,
+      "factor": "Age",
+      "effect_size_cohens_d": 0.346398269118863,
+      "approved_average": 45.66312809624912,
+      "rejected_average": 41.324535545348596,
+      "direction": "\u2191 Higher is better"
+    },
+    {
+      "rank": 8,
+      "factor": "Experience",
+      "effect_size_cohens_d": 0.34350001833210564,
+      "approved_average": 23.28874734607219,
+      "rejected_average": 19.081168163433194,
+      "direction": "\u2191 Higher is better"
+    },
+    {
+      "rank": 9,
+      "factor": "MonthlyLoanPayment",
+      "effect_size_cohens_d": 0.2163436062256652,
+      "approved_average": 676.4026893135174,
+      "rejected_average": 838.402001782409,
+      "direction": "\u2193 Lower is better"
+    },
+    {
+      "rank": 10,
+      "factor": "LoanAmount",
+      "effect_size_cohens_d": 0.17542157426425176,
+      "approved_average": 23641.912243453644,
+      "rejected_average": 26638.6819771029,
+      "direction": "\u2193 Lower is better"
+    }
+  ],
+  "discovered_decision_rules": "# LOAN APPROVAL DECISION RULES\n\n## TOP 8 DECISION FACTORS & ACTIONABLE RULES\n\n---\n\n### **1. CREDIT SCORE** (Strength: 1.53 - STRONGEST PREDICTOR)\n\n**Decision Rule:**\n- **APPROVE IF:** Credit Score \u2265 620\n- **REJECT IF:** Credit Score < 570\n- **GRAY ZONE:** 570-619 (requires compensating factors)\n\n**Logic:**\nCredit score is the single strongest indicator of repayment reliability. It reflects borrower's historical payment behavior and creditworthiness. Approved applicants average 635, rejected average 569 - a 66-point gap.\n\n**Observed Thresholds:**\n- All approved applicants: 620+\n- Most rejected applicants: <570\n- The 620 threshold appears to be an informal cutoff in current practice\n\n---\n\n### **2. TOTAL DEBT-TO-INCOME RATIO (DTI)** (Strength: 0.86 - SECOND STRONGEST)\n\n**Decision Rule:**\n- **APPROVE IF:** Total DTI \u2264 35%\n- **REJECT IF:** Total DTI > 50%\n- **CAUTION ZONE:** 35-50% (scrutinize other factors heavily)\n\n**Logic:**\nDTI measures what percentage of monthly income goes to debt payments. High DTI indicates over-leverage and increased default risk. The data shows stark separation: approved avg=22%, rejected avg=51%.\n\n**Observed Thresholds:**\n- Approved range: 17.9% - 35.7% (one outlier at 35.7% with strong income)\n- Rejected range: 35.2% - 194.7% (catastrophic outlier at 194.7%)\n- **Critical threshold: 40%+ is extreme risk**\n\n**Special Note:** Applicant Rejected #2 with 194.7% DTI should be auto-rejected (mathematically impossible to service debt).\n\n---\n\n### **3. ANNUAL INCOME** (Strength: 1.22 - THIRD STRONGEST)\n\n**Decision Rule:**\n- **APPROVE IF:** Annual Income \u2265 $50,000\n- **CAUTION IF:** Annual Income $30,000-$50,000 (requires excellent DTI)\n- **REJECT IF:** Annual Income < $20,000 (with normal DTI) OR < $30,000 (with ANY elevated DTI)\n\n**Logic:**\nHigher income provides greater debt servicing capacity and financial resilience. Approved applicants earn $84,696 on average vs. rejected at $48,127 - a 76% difference. Income must be sufficient to cover both existing debt and new loan payments.\n\n**Observed Thresholds:**\n- Approved range: $30,177 - $89,633\n- Rejected range: $18,000 - $117,150 (note: one high-income rejection with bankruptcy)\n- **Minimum viable income for approval: ~$30,000** (but only with DTI <20%)\n\n---\n\n### **4. PAYMENT HISTORY** (Implied from patterns)\n\n**Decision Rule:**\n- **APPROVE IF:** Payment History \u2265 85%\n- **CAUTION IF:** Payment History 75%-84%\n- **REJECT IF:** Payment History < 75% OR combined with credit score <600\n\n**Logic:**\nPayment history demonstrates behavioral commitment to obligations. Excellent payment history (85%+) can offset moderate credit score or income concerns.\n\n**Observed Thresholds:**\n- Approved range: 63% - 96% (wide range, but lower scores compensated by other factors)\n- Rejected range: 85% - 92% (payment history ALONE doesn't guarantee approval)\n- **Insight:** Payment history is necessary but NOT sufficient\n\n---\n\n### **5. PREVIOUS DEFAULTS** (Strong Disqualifier)\n\n**Decision Rule:**\n- **APPROVE IF:** Previous Defaults = 0\n- **REJECT IF:** Previous Defaults \u2265 2\n- **CAUTION IF:** Previous Defaults = 1 (requires credit score >620 + DTI <30%)\n\n**Logic:**\nPrevious defaults are the strongest behavioral red flag. They indicate actual default behavior, not just risk scores. A borrower who has defaulted before is 5-10x more likely to default again.\n\n**Observed Thresholds:**\n- All approved applicants: 0 defaults\n- All rejected applicants with defaults: 2 defaults (100% rejection rate)\n\n**Critical Rule:** 2 or more previous defaults = near-certain rejection regardless of other factors.\n\n---\n\n### **6. BANKRUPTCY STATUS** (Automatic Red Flag)\n\n**Decision Rule:**\n- **REJECT IF:** Bankruptcy = Yes (unless >7 years old AND exceptional compensating factors)\n- **APPROVE IF:** Bankruptcy = No\n\n**Logic:**\nBankruptcy signals fundamental financial distress and inability to manage obligations. It's the ultimate credit event and indicates systemic problems beyond temporary hardship.\n\n**Observed Pattern:**\n- All approved applicants: No bankruptcy\n- One rejected applicant WITH bankruptcy also had defaults and poor DTI (compounding factors)\n\n**Critical Rule:** Active bankruptcy or recent bankruptcy = likely rejection without extraordinary circumstances.\n\n---\n\n### **7. DEBT-TO-INCOME RATIO (Non-Total)** (Strength: 0.80)\n\n**Decision Rule:**\n- **APPROVE IF:** DTI \u2264 20%\n- **CAUTION IF:** DTI 20%-30%\n- **REJECT IF:** DTI > 35%\n\n**Logic:**\nThis appears to measure housing debt only (vs. Total DTI which includes all debt). Provides more granular assessment of loan-specific affordability. Approved avg=12%, rejected avg=24%.\n\n**Observed Thresholds:**\n- Acts as secondary confirmation of debt burden\n- Values align closely with Total DTI, suggesting consistency in calculation\n\n---\n\n### **8. AGE & EXPERIENCE** (Strength: 0.35 & 0.34 - WEAKEST PREDICTORS)\n\n**Decision Rule:**\n- **PREFER:** Age 45+, Experience 20+ years\n- **ACCEPTABLE:** Age 35+, Experience 15+ years\n- **CAUTION:** Age <35, Experience <15 years (requires stronger metrics in other areas)\n\n**Logic:**\nMaturity and job stability increase likelihood of consistent income and responsible financial behavior. However, these are weaker predictors than financial metrics\u2014age matters less than creditworthiness.\n\n**Observed Thresholds:**\n- Approved avg: Age 45.66, Experience 23.29\n- Rejected avg: Age 41.32, Experience 19.08\n- Difference is meaningful but smaller than income/credit factors\n\n---\n\n## SUMMARY: THE APPROVAL HIERARCHY\n\n```\nTIER 1 - HARD DISQUALIFIERS (Auto-Reject):\n  \u2717 Credit Score < 570\n  \u2717 Total DTI > 50%\n  \u2717 Previous Defaults \u2265 2\n  \u2717 Bankruptcy (unless >7 years old)\n  \u2717 Annual Income < $20,000\n\nTIER 2 - STRONG APPROVAL SIGNALS (Usually Approve):\n  \u2713 Credit Score \u2265 620\n  \u2713 Total DTI \u2264 35%\n  \u2713 Annual Income \u2265 $50,000\n  \u2713 Payment History \u2265 85%\n  \u2713 Previous Defaults = 0\n\nTIER 3 - COMPENSATING FACTORS (Discretionary):\n  \u2022 Age/Experience (minor weight)\n  \u2022 Payment History strength can offset moderate income\n  \u2022 High income (>$80K) can offset DTI up to 40%\n  \u2022 Excellent credit (650+) can offset payment history gaps\n```\n\n---\n\n## PRACTICAL DECISION PROCESS\n\n1. **Screen for disqualifiers first** (Credit, DTI, defaults, bankruptcy)\n2. **Calculate total DTI** - if >50%, likely reject\n3. **Verify income adequacy** - must support both existing debt and new payment\n4. **Review credit score** - should be \u2265620 minimum\n5. **Check payment history** - 85%+ is strong confirmation\n6. **Consider age/experience** as final tiebreaker if marginal case\n\nThis sequential approach mimics the data patterns in approved vs. rejected applications.",
+  "categorical_factors": {
+    "EmploymentStatus": {
+      "Employed": {
+        "approval_rate": 0.0943914426134721,
+        "count": 13836
+      },
+      "Self-Employed": {
+        "approval_rate": 0.07610241820768136,
+        "count": 1406
+      },
+      "Unemployed": {
+        "approval_rate": 0.0,
+        "count": 758
+      }
+    },
+    "EducationLevel": {
+      "High School": {
+        "approval_rate": 0.025878003696857672,
+        "count": 4869
+      },
+      "Doctorate": {
+        "approval_rate": 0.21638924455825864,
+        "count": 781
+      },
+      "Master": {
+        "approval_rate": 0.1664559629161399,
+        "count": 2373
+      },
+      "Bachelor": {
+        "approval_rate": 0.10953177257525083,
+        "count": 4784
+      },
+      "Associate": {
+        "approval_rate": 0.062323833385530845,
+        "count": 3193
+      }
+    },
+    "LoanPurpose": {
+      "Auto": {
+        "approval_rate": 0.08531044926804644,
+        "count": 3962
+      },
+      "Debt Consolidation": {
+        "approval_rate": 0.08834586466165413,
+        "count": 3192
+      },
+      "Education": {
+        "approval_rate": 0.08881578947368421,
+        "count": 2432
+      },
+      "Home": {
+        "approval_rate": 0.08881578947368421,
+        "count": 4864
+      },
+      "Other": {
+        "approval_rate": 0.0935483870967742,
+        "count": 1550
+      }
+    },
+    "HomeOwnershipStatus": {
+      "Mortgage": {
+        "approval_rate": 0.07566242916219942,
+        "count": 6529
+      },
+      "Rent": {
+        "approval_rate": 0.08847836655323287,
+        "count": 4114
+      },
+      "Own": {
+        "approval_rate": 0.13110886417256487,
+        "count": 2967
+      },
+      "Other": {
+        "approval_rate": 0.0694560669456067,
+        "count": 2390
+      }
+    },
+    "MaritalStatus": {
+      "Married": {
+        "approval_rate": 0.08692384769539079,
+        "count": 7984
+      },
+      "Single": {
+        "approval_rate": 0.08862576246860424,
+        "count": 5574
+      },
+      "Divorced": {
+        "approval_rate": 0.0906832298136646,
+        "count": 1610
+      },
+      "Widowed": {
+        "approval_rate": 0.09495192307692307,
+        "count": 832
+      }
+    }
+  },
+  "methodology": {
+    "approach": "Pre-analysis of training data followed by LLM pattern formalization",
+    "data_type": "Simplified synthetic loan data with deterministic approval logic",
+    "key_features": [
+      "Clear decision thresholds (tier-based scoring)",
+      "Learnable patterns (no random noise in approval rule)",
+      "Realistic feature correlations",
+      "Representative of actual lending practices"
+    ]
+  }
 }

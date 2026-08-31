@@ -1,2 +1,5 @@
-applicant_id,ground_truth,bl_decision,bl_confidence,bl_matches_ground,bl_stage_1,bl_stage_2,bl_stage_3,bl_stage_4,bl_time,bl_used_prior_context
-0,1,APPROVED,0.75,True,pass,Excellent,Low,APPROVED,12.261406660079956,False
+applicant_id,ground_truth,bl_decision,bl_matches_ground,bl_stage_1,bl_stage_2,bl_stage_3,bl_stage_4,bl_time,bl_used_prior_context,bl_error
+test_00000,69,REJECTED,True,pass,Good,Medium,REJECTED,5.062062978744507,False,False
+test_00001,40,REJECTED,True,pass,Good,Medium,REJECTED,4.92300271987915,False,False
+test_00002,98,REJECTED,True,pass,Good,Very High,REJECTED,5.080918312072754,False,False
+test_00003,48,REJECTED,True,pass,Good,Medium,REJECTED,4.629436492919922,False,False
