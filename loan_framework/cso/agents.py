@@ -109,6 +109,7 @@ REASONING: [1-2 sentences]"""
             messages=[{"role": "user", "content": prompt}],
         )
         assessment = response.content[0].text
+        print(f"  LLM Response: {assessment}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -221,6 +222,7 @@ PRIMARY RISKS: [Main concerns, if any]"""
             messages=[{"role": "user", "content": prompt}],
         )
         analysis = response.content[0].text
+        print(f"  LLM Response: {analysis}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -336,6 +338,7 @@ REASONING: [Key factors driving decision]"""
             messages=[{"role": "user", "content": prompt}],
         )
         decision_text = response.content[0].text
+        print(f"  LLM Response: {decision_text}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 

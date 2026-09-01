@@ -56,6 +56,7 @@ Output: CREDIT TIER: [Tier] | REASONING: [reason]"""
             messages=[{"role": "user", "content": prompt}],
         )
         assessment = response.content[0].text
+        print(f"  LLM Response: {assessment}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -118,6 +119,7 @@ Output: RISK LEVEL: [Low/Medium/High/Very High]"""
             messages=[{"role": "user", "content": prompt}],
         )
         analysis = response.content[0].text
+        print(f"  LLM Response: {analysis}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -151,22 +153,59 @@ def baseline_stage_4(cso: ContextStateObject) -> ContextStateObject:
 
     print(f"\n[STAGE 4 - BASELINE] Final decision for {cso['applicant_id']}")
 
-    prompt = f"""FINAL DECISION (Independent Analysis)
- 
-Make approval/rejection decision based on applicant profile alone.
- 
-HARD STOPS: Any prior defaults, Unemployed, DTI >55%, Bankruptcy
-APPROVE IF: Good credit (700+), Decent income ($60k+), DTI <40%
-REJECT IF: Poor credit (<650), Low income (<$40k), DTI >45%
- 
-APPLICANT:
-- Credit: {cso["credit_score"]:.0f}
-- Income: ${cso["annual_income"]:,.0f}
-- DTI: {cso["total_debt_to_income"]:.1%}
-- Defaults: {cso["previous_loan_defaults"]}
-- Bankruptcy: {"Yes" if cso["bankruptcy_history"] else "No"}
- 
-Decision: APPROVED or REJECTED?"""
+    prompt = f"""FINAL LOAN DECISION FRAMEWORK
+     
+    You are making a final APPROVAL/REJECTION decision based on all analysis.
+     
+    KEY DECISION CRITERIA:
+    ─────────────────────────────────────────────────────
+     
+    HARD STOPS (Automatic REJECTION):
+    - Bankruptcy history
+    - Unemployment status  
+    - DTI > 55%
+    - Previous loan defaults (2+)
+     
+    STRONG APPROVAL FACTORS (Favor APPROVAL):
+    - Credit score 720+
+    - Income $100k+
+    - DTI < 30%
+    - Net worth $300k+
+    - Home owner (mortgage/own)
+    - Stable employment (5+ years)
+    - Perfect payment history (99%+)
+    - No prior defaults
+     
+    STRONG REJECTION FACTORS (Favor REJECTION):
+    - Credit score < 650
+    - Income < $40k
+    - DTI > 45%
+    - Net worth < $50k
+    - Recent credit inquiries
+    - Payment history < 95%
+    - Previous defaults (1)
+     
+    APPLICANT FINAL PROFILE:
+    ─────────────────────────────────────────────────────
+    Credit Score:        {cso["credit_score"]:.0f}
+    Annual Income:       ${cso["annual_income"]:,.0f}
+    Debt-to-Income:      {cso["total_debt_to_income"]:.1%}
+    Employment:          {cso["employment_status"]} ({cso["job_tenure"] / 12:.1f} years)
+    Payment History:     {cso["payment_history"]:.0f}%
+    Prior Defaults:      {cso["previous_loan_defaults"]}
+    Net Worth:           ${cso["net_worth"]:,.0f}
+    Home Status:         {cso["home_ownership_status"]}
+    Bankruptcy:          {"YES" if cso["bankruptcy_history"] else "NO"}
+     
+    TASK:
+    1. Check for any HARD STOPS → If found, REJECT
+    2. Count APPROVAL FACTORS vs REJECTION FACTORS
+    3. Make decision based on balance
+    4. Provide clear reasoning
+     
+    Output format:
+    FINAL DECISION: [APPROVED or REJECTED]
+    REASONING: [Key factors driving decision]"""
 
     try:
         response = client.messages.create(
@@ -175,16 +214,22 @@ Decision: APPROVED or REJECTED?"""
             messages=[{"role": "user", "content": prompt}],
         )
         decision_text = response.content[0].text
+        print(f"  LLM Response: {decision_text}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
-        if "APPROVED" in decision_text.upper():
+        # Extract decision
+        decision_upper = decision_text.upper()
+        if "APPROVED" in decision_upper:
             decision = "APPROVED"
-        else:
+        elif "REJECTED" in decision_upper:
             decision = "REJECTED"
-    except:
+        else:
+            decision = "APPROVED"
+    except Exception as e:
+        print(f"  Error: {str(e)}")
         decision = "APPROVED"
-        decision_text = "Decision"
+        decision_text = "Decision based on applicant profile"
         input_tokens = 0
         output_tokens = 0
 
