@@ -1,15 +1,3 @@
-"""
-ENHANCED PHASE 1: FACTOR DISCOVERY
-
-This improved version extracts CLEAR DECISION PATTERNS from training data.
-
-Key improvements:
-1. Pre-analyzes data to identify strongest factors (before LLM)
-2. Provides explicit comparisons of approved vs rejected applicants
-3. Guides LLM to identify tier-based decision rules
-4. Produces factors that are actually discoverable in data
-"""
-
 import json
 import os
 from pathlib import Path

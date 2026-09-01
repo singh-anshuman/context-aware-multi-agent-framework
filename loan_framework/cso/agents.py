@@ -1,19 +1,3 @@
-"""
-IMPROVED AGENT PROMPTS
-
-This file contains UPDATED PROMPTS for all stages that are aligned with:
-1. Simplified data generation logic
-2. Clear, tier-based decision frameworks
-3. Explicit factor thresholds discovered in Phase 1
-4. LLM reasoning on learnable patterns
-
-Key improvements:
-- Prompts now reference SPECIFIC THRESHOLDS (e.g., "Credit Score > 720")
-- Decision frameworks are TIER-BASED (Excellent/Very Good/Good/Fair/Poor)
-- Factors are PRIORITIZED by importance (top factors first)
-- Rules are EXPLICIT and LEARNABLE (no ambiguity)
-"""
-
 import os
 
 from anthropic import Anthropic
@@ -48,7 +32,7 @@ def stage_1_document_verification(cso: ContextStateObject) -> ContextStateObject
     if cso["experience_years"] < 1:
         cso["stage_1_flags"].append("Insufficient Work Experience - HARD STOP")
 
-    print(f"\n[STAGE 1 - IMPROVED] Document verification for {cso['applicant_id']}")
+    print(f"\n[STAGE 1] Document verification for {cso['applicant_id']}")
     print(f"  Verification Status: {cso['stage_1_verification_status'].upper()}")
     print(f"  Tokens → Input: 0 | Output: 0 | Total: 0 (Rule-based)")
 
@@ -56,24 +40,14 @@ def stage_1_document_verification(cso: ContextStateObject) -> ContextStateObject
 
 
 # ============================================================================
-# STAGE 2: CREDIT ASSESSMENT (LLM with Improved Prompts)
+# STAGE 2: CREDIT ASSESSMENT
 # ============================================================================
 
 
 def stage_2_credit_assessment_with_discovered_factors(
     cso: ContextStateObject, discovered_factors_text: str = ""
 ) -> ContextStateObject:
-    """
-    Stage 2: Credit Assessment
-
-    IMPROVED PROMPT with:
-    - Clear tier definitions (Excellent/Very Good/Good/Fair/Poor)
-    - Specific credit score thresholds
-    - Tier-based reasoning
-    - Simple, decisive output
-    """
-
-    print(f"\n[STAGE 2 - IMPROVED] Credit assessment for {cso['applicant_id']}")
+    print(f"\n[STAGE 2] Credit assessment for {cso['applicant_id']}")
 
     # Build the prompt with explicit tier framework
     prompt = f"""CREDIT ASSESSMENT - TIER-BASED FRAMEWORK
@@ -172,24 +146,14 @@ REASONING: [1-2 sentences]"""
 
 
 # ============================================================================
-# STAGE 3: RISK ASSESSMENT (LLM with Improved Prompts)
+# STAGE 3: RISK ASSESSMENT
 # ============================================================================
 
 
 def stage_3_risk_assessment_with_discovered_factors(
     cso: ContextStateObject, discovered_factors_text: str = ""
 ) -> ContextStateObject:
-    """
-    Stage 3: Risk Assessment
-
-    IMPROVED PROMPT with:
-    - Clear risk level definitions (Low/Medium/High/Very High)
-    - Specific DTI thresholds
-    - Multiple risk factor analysis
-    - Context from Stage 2
-    """
-
-    print(f"\n[STAGE 3 - IMPROVED] Risk assessment for {cso['applicant_id']}")
+    print(f"\n[STAGE 3] Risk assessment for {cso['applicant_id']}")
 
     # Use Stage 2 context
     stage_2_context = f"Stage 2 Credit Assessment: {cso['stage_2_credit_band']}\n"
@@ -294,24 +258,14 @@ PRIMARY RISKS: [Main concerns, if any]"""
 
 
 # ============================================================================
-# STAGE 4: FINAL DECISION (LLM with Improved Prompts)
+# STAGE 4: FINAL DECISION
 # ============================================================================
 
 
 def stage_4_final_decision_with_discovered_factors(
     cso: ContextStateObject,
 ) -> ContextStateObject:
-    """
-    Stage 4: Final Decision
-
-    IMPROVED PROMPT with:
-    - Explicit approval/rejection criteria
-    - Weighted factor consideration
-    - Clear reasoning framework
-    - Context from all prior stages
-    """
-
-    print(f"\n[STAGE 4 - IMPROVED] Final decision for {cso['applicant_id']}")
+    print(f"\n[STAGE 4] Final decision for {cso['applicant_id']}")
 
     # Build context from prior stages
     prior_context = f"""PRIOR ASSESSMENTS:
@@ -420,24 +374,18 @@ REASONING: [Key factors driving decision]"""
     )
 
     total_tokens = input_tokens + output_tokens
-    print(f"  FINAL DECISION: {decision}")
+    print(f"FINAL DECISION: {decision}")
+    print(f"Ground Truth: {'APPROVED' if cso['loan_approved_actual'] else 'REJECTED'}")
+    print(f"Correct: {cso['decision_correct']}")
     print(
-        f"  Ground Truth: {'APPROVED' if cso['loan_approved_actual'] else 'REJECTED'}"
-    )
-    print(f"  Correct: {cso['decision_correct']}")
-    print(
-        f"  Tokens → Input: {input_tokens} | Output: {output_tokens} | Total: {total_tokens}"
+        f"Tokens → Input: {input_tokens} | Output: {output_tokens} | Total: {total_tokens}"
     )
 
     return cso
 
 
 def run_context_aware_pipeline(cso):
-    """Run improved context-aware pipeline"""
-    print(f"\n{'=' * 60}")
-    print("CONTEXT-AWARE PIPELINE")
-    print(f"{'=' * 60}")
-
+    print("\nCONTEXT-AWARE PIPELINE\n")
     cso = stage_1_document_verification(cso)
     cso = stage_2_credit_assessment_with_discovered_factors(cso)
     cso = stage_3_risk_assessment_with_discovered_factors(cso)

@@ -5,9 +5,7 @@ These agents use the discovered factors and CSO structure
 but WITHOUT reading prior stage context (no CSO propagation).
 """
 
-import json
 import os
-from pathlib import Path
 
 from anthropic import Anthropic
 from dotenv import load_dotenv
@@ -25,7 +23,7 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 # ============================================================================
 
 
-def baseline_stage_2_improved(cso: ContextStateObject) -> ContextStateObject:
+def baseline_stage_2(cso: ContextStateObject) -> ContextStateObject:
     """Baseline Stage 2 - No prior context from Stage 1"""
 
     print(f"\n[STAGE 2 - BASELINE] Credit assessment for {cso['applicant_id']}")
@@ -88,7 +86,7 @@ Output: CREDIT TIER: [Tier] | REASONING: [reason]"""
     return cso
 
 
-def baseline_stage_3_improved(cso: ContextStateObject) -> ContextStateObject:
+def baseline_stage_3(cso: ContextStateObject) -> ContextStateObject:
     """Baseline Stage 3 - No prior context"""
 
     print(f"\n[STAGE 3 - BASELINE] Risk assessment for {cso['applicant_id']}")
@@ -148,7 +146,7 @@ Output: RISK LEVEL: [Low/Medium/High/Very High]"""
     return cso
 
 
-def baseline_stage_4_improved(cso: ContextStateObject) -> ContextStateObject:
+def baseline_stage_4(cso: ContextStateObject) -> ContextStateObject:
     """Baseline Stage 4 - No prior context"""
 
     print(f"\n[STAGE 4 - BASELINE] Final decision for {cso['applicant_id']}")
@@ -199,20 +197,17 @@ Decision: APPROVED or REJECTED?"""
     )
 
     print(f"  FINAL DECISION: {decision}")
+    print(f"Ground Truth: {'APPROVED' if cso['loan_approved_actual'] else 'REJECTED'}")
     print(f"  Correct: {cso['decision_correct']}")
 
     return cso
 
 
-def run_baseline_pipeline_improved(cso):
-    """Run improved baseline pipeline (no context)"""
-    print(f"\n{'=' * 60}")
-    print(f"BASELINE PIPELINE")
-    print(f"{'=' * 60}")
-
+def run_baseline_pipeline(cso):
+    print("\nBASELINE PIPELINE\n")
     cso = stage_1_document_verification(cso)
-    cso = baseline_stage_2_improved(cso)
-    cso = baseline_stage_3_improved(cso)
-    cso = baseline_stage_4_improved(cso)
+    cso = baseline_stage_2(cso)
+    cso = baseline_stage_3(cso)
+    cso = baseline_stage_4(cso)
 
     return cso
