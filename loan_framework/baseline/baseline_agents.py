@@ -56,7 +56,7 @@ Output: CREDIT TIER: [Tier] | REASONING: [reason]"""
             messages=[{"role": "user", "content": prompt}],
         )
         assessment = response.content[0].text
-        print(f"  LLM Response: {assessment}")
+        # print(f"  LLM Response: {assessment}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -119,7 +119,7 @@ Output: RISK LEVEL: [Low/Medium/High/Very High]"""
             messages=[{"role": "user", "content": prompt}],
         )
         analysis = response.content[0].text
-        print(f"  LLM Response: {analysis}")
+        # print(f"  LLM Response: {analysis}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -214,7 +214,7 @@ def baseline_stage_4(cso: ContextStateObject) -> ContextStateObject:
             messages=[{"role": "user", "content": prompt}],
         )
         decision_text = response.content[0].text
-        print(f"  LLM Response: {decision_text}")
+        # print(f"  LLM Response: {decision_text}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 

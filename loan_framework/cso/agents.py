@@ -109,7 +109,7 @@ REASONING: [1-2 sentences]"""
             messages=[{"role": "user", "content": prompt}],
         )
         assessment = response.content[0].text
-        print(f"  LLM Response: {assessment}")
+        # print(f"  LLM Response: {assessment}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -222,7 +222,7 @@ PRIMARY RISKS: [Main concerns, if any]"""
             messages=[{"role": "user", "content": prompt}],
         )
         analysis = response.content[0].text
-        print(f"  LLM Response: {analysis}")
+        # print(f"  LLM Response: {analysis}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
@@ -264,52 +264,100 @@ PRIMARY RISKS: [Main concerns, if any]"""
 # ============================================================================
 
 
-def stage_4_final_decision_with_discovered_factors(
-    cso: ContextStateObject,
-) -> ContextStateObject:
-    print(f"\n[STAGE 4] Final decision for {cso['applicant_id']}")
+def stage_4_final_decision_with_discovered_factors(cso):
+    """
+    Stage 4: Final Decision
 
-    # Build context from prior stages
-    prior_context = f"""PRIOR ASSESSMENTS:
+    IMPROVED PROMPT with:
+    - Explicit approval/rejection criteria
+    - Weighted factor consideration
+    - Clear reasoning framework
+    - Context from all prior stages
+    """
+
+    print(f"\n[STAGE 4 - IMPROVED] Final decision for {cso['applicant_id']}")
+
+    # Build context from prior stages - these are KEY decision factors
+    prior_context = f"""PRIOR STAGE ASSESSMENTS (Use these as PRIMARY decision factors):
+─────────────────────────────────────────────────────
 Stage 1 Verification: {cso["stage_1_verification_status"].upper()}
-Stage 2 Credit Assessment: {cso["stage_2_credit_band"]} tier
-Stage 3 Risk Assessment: {cso["stage_3_risk_level"]} risk"""
-
-    prompt = f"""FINAL LOAN DECISION FRAMEWORK
+Stage 2 Credit Tier Assessment: {cso["stage_2_credit_band"].upper()} tier
+  └─ Assessment: {cso["stage_2_assessment"][:100]}...
  
-You are making a final APPROVAL/REJECTION decision based on all analysis.
+Stage 3 Risk Level Assessment: {cso["stage_3_risk_level"].upper()} risk
+  └─ Assessment: {cso["stage_3_analysis"][:100]}...
+─────────────────────────────────────────────────────"""
+
+    prompt = f"""FINAL LOAN DECISION - USING PRIOR STAGE CONTEXT
+ 
+You are making a FINAL APPROVAL/REJECTION decision based on cumulative analysis
+from all prior stages. The Stage 2 Credit Tier and Stage 3 Risk Level assessments
+are CRITICAL inputs to your final decision.
  
 {prior_context}
  
-KEY DECISION CRITERIA:
+DECISION FRAMEWORK - Based on Stage 2 & Stage 3 Assessments:
 ─────────────────────────────────────────────────────
  
+CREDIT TIER-BASED APPROVAL LOGIC (from Stage 2):
+ 
+  EXCELLENT Credit Tier (Stage 2):
+    → Strong approval candidate
+    → Proceed to risk verification (Stage 3)
+    → Typically approve unless Stage 3 shows VERY HIGH risk
+ 
+  VERY GOOD Credit Tier (Stage 2):
+    → Good approval candidate
+    → Risk level (Stage 3) is CRITICAL to decision
+    → Approve if Stage 3 shows LOW or MEDIUM risk
+    → Reject if Stage 3 shows HIGH or VERY HIGH risk
+ 
+  GOOD Credit Tier (Stage 2):
+    → Neutral baseline credit profile
+    → Heavily dependent on Stage 3 risk assessment
+    → Approve if Stage 3 shows LOW risk
+    → Reject if Stage 3 shows MEDIUM, HIGH, or VERY HIGH risk
+ 
+  FAIR Credit Tier (Stage 2):
+    → Below average credit, challenging approval
+    → Stage 3 risk is CRITICAL
+    → Only approve if Stage 3 shows LOW risk with strong support factors
+    → Reject if Stage 3 shows MEDIUM or higher risk
+ 
+  POOR Credit Tier (Stage 2):
+    → Significant credit concerns, high rejection likelihood
+    → Only consider approval if Stage 3 shows LOW risk AND multiple strong factors
+    → Reject unless exceptional circumstances
+ 
+RISK-BASED REJECTION LOGIC (from Stage 3):
+ 
+  VERY HIGH Risk (Stage 3):
+    → Automatic rejection regardless of credit tier
+    → Loan default probability is unacceptable
+ 
+  HIGH Risk (Stage 3):
+    → Reject unless credit tier is EXCELLENT with all approval factors present
+    → Default risk is too concerning
+ 
+  MEDIUM Risk (Stage 3):
+    → Conditional approval based on credit tier
+    → Approve if Stage 2 is EXCELLENT or VERY GOOD
+    → Reject if Stage 2 is FAIR or POOR
+ 
+  LOW Risk (Stage 3):
+    → Favorable for approval
+    → Decision primarily depends on credit tier
+    → Rarely reject if Stage 3 confirms low risk
+ 
 HARD STOPS (Automatic REJECTION):
-- Bankruptcy history
-- Unemployment status  
+─────────────────────────────────────────────────────
+- Stage 1 verification: FAIL
+- Bankruptcy history: YES
+- Previous loan defaults: 2 or more
 - DTI > 55%
-- Previous loan defaults (2+)
+- Unemployment status
  
-STRONG APPROVAL FACTORS (Favor APPROVAL):
-- Credit score 720+
-- Income $100k+
-- DTI < 30%
-- Net worth $300k+
-- Home owner (mortgage/own)
-- Stable employment (5+ years)
-- Perfect payment history (99%+)
-- No prior defaults
- 
-STRONG REJECTION FACTORS (Favor REJECTION):
-- Credit score < 650
-- Income < $40k
-- DTI > 45%
-- Net worth < $50k
-- Recent credit inquiries
-- Payment history < 95%
-- Previous defaults (1)
- 
-APPLICANT FINAL PROFILE:
+SUPPORTING APPLICANT DETAILS:
 ─────────────────────────────────────────────────────
 Credit Score:        {cso["credit_score"]:.0f}
 Annual Income:       ${cso["annual_income"]:,.0f}
@@ -319,17 +367,22 @@ Payment History:     {cso["payment_history"]:.0f}%
 Prior Defaults:      {cso["previous_loan_defaults"]}
 Net Worth:           ${cso["net_worth"]:,.0f}
 Home Status:         {cso["home_ownership_status"]}
-Bankruptcy:          {"YES" if cso["bankruptcy_history"] else "NO"}
  
-TASK:
-1. Check for any HARD STOPS → If found, REJECT
-2. Count APPROVAL FACTORS vs REJECTION FACTORS
-3. Make decision based on balance
-4. Provide clear reasoning
+DECISION PROCESS:
+─────────────────────────────────────────────────────
+1. Check for HARD STOPS → If any found, REJECT immediately
+2. Check Stage 2 Credit Tier → Primary approval indicator
+3. Check Stage 3 Risk Level → Confirms or contradicts credit assessment
+4. Cross-reference: Does credit tier align with risk level?
+   - Aligned (Good credit + Low risk OR Poor credit + High risk) → Decision is clear
+   - Misaligned (Good credit + High risk OR Poor credit + Low risk) → Investigate further
+5. Apply decision framework above based on tier/risk combination
+6. Make final decision
  
 Output format:
 FINAL DECISION: [APPROVED or REJECTED]
-REASONING: [Key factors driving decision]"""
+DECISION PATH: [Credit Tier + Risk Level combination that drove decision]
+REASONING: [Brief explanation of how Stage 2 and Stage 3 led to this decision]"""
 
     try:
         response = client.messages.create(
@@ -338,7 +391,7 @@ REASONING: [Key factors driving decision]"""
             messages=[{"role": "user", "content": prompt}],
         )
         decision_text = response.content[0].text
-        print(f"  LLM Response: {decision_text}")
+        # print(f"  LLM Response: {decision_text}")
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
 
